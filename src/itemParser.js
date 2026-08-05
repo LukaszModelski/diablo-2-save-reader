@@ -18,8 +18,8 @@ function parseItems(buf) {
     const nextJm = buf.indexOf(Buffer.from([0x4A, 0x4D]), currOffset + 2);
     const startBit = (currOffset + 2) * 8;
 
-    const location = getBits(buf, startBit + 19, 3);
-    const isSimple = getBits(buf, startBit + 5, 1);
+    const location = getBits(buf, startBit + 42, 3);
+    const isSimple = getBits(buf, startBit + 21, 1);
 
     let isEquipped = false;
     let locStr = '';
@@ -27,11 +27,11 @@ function parseItems(buf) {
 
     if (location === 1) {
       isEquipped = true;
-      const slotId = getBits(buf, startBit + 22, 4);
+      const slotId = getBits(buf, startBit + 45, 4);
       slotName = EQUIPPED_SLOTS[slotId] || `Slot ${slotId}`;
       locStr = `Equipped (${slotName})`;
     } else if (location === 0) {
-      const containerId = getBits(buf, startBit + 22, 3);
+      const containerId = getBits(buf, startBit + 57, 3);
       locStr = `${STORED_LOCATIONS[containerId] || 'Stored'}`;
     } else if (location === 2) {
       locStr = 'Belt';
@@ -48,7 +48,8 @@ function parseItems(buf) {
 
     let qualityName = 'Normal';
     if (!isSimple) {
-      const quality = getBits(buf, startBit + 95, 4);
+      // Extended data after the code: 32-bit GUID (+95..126), 7-bit item level (+127..133), then quality
+      const quality = getBits(buf, startBit + 134, 4);
       qualityName = QUALITIES[quality] || `Quality ${quality}`;
     }
 
