@@ -95,9 +95,17 @@ function parseSaveFile(filePath) {
   console.log();
 
   console.log(`\x1b[1m\x1b[33m🎒 Item Inventory Overview:\x1b[0m`);
-  const groupedSummary = Object.entries(itemData.groupedSummary);
-  groupedSummary.forEach(([itemTitle, count]) => {
-    console.log(`  - \x1b[32m${itemTitle}\x1b[0m x${count}`);
+  const categories = Object.keys(itemData.groupedByCategory).sort();
+  categories.forEach(category => {
+    console.log(`  \x1b[1m${category}\x1b[0m`);
+    const entries = Object.entries(itemData.groupedByCategory[category]).sort(([nameA, a], [nameB, b]) => {
+      if (a.level != null && b.level != null) return a.level - b.level;
+      return nameA.localeCompare(nameB);
+    });
+    entries.forEach(([name, { count, level }]) => {
+      const levelTag = level != null ? ` \x1b[2m(Lvl ${level})\x1b[0m` : '';
+      console.log(`    - \x1b[32m${name}\x1b[0m${levelTag} x${count}`);
+    });
   });
 
   console.log(`\x1b[36m==================================================\x1b[0m\n`);

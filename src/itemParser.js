@@ -60,6 +60,7 @@ function parseItems(buf) {
         rawCode: code,
         name: dbEntry.name,
         type: dbEntry.type,
+        level: dbEntry.level,
         quality: qualityName,
         location: locStr,
         isEquipped,
@@ -83,12 +84,23 @@ function parseItems(buf) {
     groupedSummary[key] = (groupedSummary[key] || 0) + 1;
   });
 
+  // Grouped by category (item type), then by name within each category
+  const groupedByCategory = {};
+  items.forEach(it => {
+    if (!groupedByCategory[it.type]) groupedByCategory[it.type] = {};
+    if (!groupedByCategory[it.type][it.name]) {
+      groupedByCategory[it.type][it.name] = { count: 0, level: it.level };
+    }
+    groupedByCategory[it.type][it.name].count += 1;
+  });
+
   return {
     totalItems: items.length,
     items,
     equippedItems,
     storedItems,
-    groupedSummary
+    groupedSummary,
+    groupedByCategory
   };
 }
 
