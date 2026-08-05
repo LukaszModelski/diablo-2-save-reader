@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amazonka - Diablo II Save Report</title>
+<style>
+  :root {
+    --bg: #16130f;
+    --card-bg: #1f1a14;
+    --border: #3a2f22;
+    --text: #d8cdb8;
+    --muted: #8c8271;
+    --highlight: #f2c94c;
+    --gold: #e0a72d;
+    --magic: #6b8cff;
+    --hp: #d24b4b;
+    --mana: #4b7bd2;
+    --unique: #c9a227;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 4rem;
+    background: radial-gradient(ellipse at top, #221c15, var(--bg));
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  header.title-bar {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  header.title-bar h1 {
+    color: var(--highlight);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+    font-size: 1.6rem;
+  }
+  header.title-bar p {
+    color: var(--muted);
+    margin: 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+  }
+  .card.full { grid-column: 1 / -1; }
+  h2 {
+    margin-top: 0;
+    font-size: 1.05rem;
+    color: var(--highlight);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    color: var(--gold);
+    font-size: 0.95rem;
+    margin: 0 0 0.4rem;
+  }
+  dl.kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 0.4rem;
+    column-gap: 1rem;
+    margin: 0;
+  }
+  dl.kv dt { color: var(--muted); }
+  dl.kv dd { margin: 0; text-align: right; }
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  table.data-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    border-bottom: 1px solid var(--border);
+    padding: 0.3rem 0.5rem;
+  }
+  table.data-table td {
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  td.slot { color: var(--muted); white-space: nowrap; }
+  .highlight { color: var(--highlight); font-weight: 600; }
+  .gold { color: var(--gold); }
+  .magic { color: var(--magic); }
+  .hp { color: var(--hp); }
+  .mana { color: var(--mana); }
+  .unique { color: var(--unique); }
+  .muted { color: var(--muted); }
+  .quality-unique { color: #c9a227; }
+  .quality-set { color: #4caf50; }
+  .quality-rare { color: #e8e05a; }
+  .quality-crafted { color: #d2914b; }
+  .quality-magic { color: var(--magic); }
+  .quality-superior, .quality-normal, .quality-inferior { color: var(--text); }
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  ul.item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.88rem;
+  }
+  ul.item-list li {
+    padding: 0.15rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .item-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+  }
+  .rune-icon {
+    flex-shrink: 0;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .count { color: var(--muted); }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    margin-top: 2rem;
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="title-bar">
+      <h1>DIABLO II SAVE FILE PARSER</h1>
+      <p>Amazonka.d2s (2442 bytes)</p>
+    </header>
+    <div class="grid">
+      <section class="card">
+      <h2>Character Summary</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd class="highlight">Amazonka</dd>
+        <dt>Class</dt><dd class="gold">Amazon</dd>
+        <dt>Level</dt><dd class="highlight">60</dd>
+        <dt>Title</dt><dd class="magic">Matriarch / Patriarch</dd>
+        <dt>Expansion (LoD)</dt><dd>Yes</dd>
+        <dt>Mode</dt><dd class="">Softcore</dd>
+        <dt>Has Died</dt><dd>Yes</dd>
+        <dt>Version ID</dt><dd>96 (0x60)</dd>
+        <dt>Last Played</dt><dd>8/4/2026, 5:17:26 PM</dd>
+      </dl></section>
+      <section class="card">
+      <h2>Base &amp; Total Attributes</h2>
+      <dl class="kv">
+        <dt>Strength</dt><dd>59</dd>
+        <dt>Dexterity</dt><dd>30</dd>
+        <dt>Energy</dt><dd>24</dd>
+        <dt>Hit Points</dt><dd class="hp">418.0 / 292.0 HP</dd>
+        <dt>Mana</dt><dd class="mana">211.0 / 103.5 MP</dd>
+        <dt>Stamina</dt><dd>171.0 / 171.0</dd>
+        <dt>Experience</dt><dd>126,567,800 XP</dd>
+        <dt>Gold</dt><dd class="gold">35,304 (Inv) + 243,901 (Stash) = 279,205 Total</dd>
+        <dt>Unassigned</dt><dd class="gold">47 Stat Points | 12 Skill Points</dd>
+      </dl></section>
+      <section class="card full">
+      <h2>Skill Allocation</h2>
+      <table class="data-table">
+        <thead><tr><th>Skill</th><th>Tree</th><th>Level</th></tr></thead>
+        <tbody>
+        <tr><td>Magic Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
+        <tr><td>Cold Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
+        <tr><td>Multiple Shot</td><td class="muted">Bow and Crossbow</td><td class="highlight">13</td></tr>
+        <tr><td>Ice Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
+        <tr><td>Guided Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">2</td></tr>
+        <tr><td>Strafe</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
+        <tr><td>Critical Strike</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Dodge</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Decoy</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Evade</td><td class="muted">Passive and Magic</td><td class="highlight">13</td></tr>
+        <tr><td>Jab</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
+        <tr><td>Poison Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
+        <tr><td>Impale</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
+        <tr><td>Plague Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">2</td></tr>
+        <tr><td>Fend</td><td class="muted">Javelin and Spear</td><td class="highlight">13</td></tr></tbody>
+      </table>
+      <p class="muted">Total Invested Skill Points: <span class="highlight">53</span></p></section>
+      <section class="card">
+      <h2>Difficulty &amp;amp; Quest Progress</h2>
+      <table class="data-table">
+        <tbody>
+        <tr><td>Normal</td><td>26 / 27 Quests</td></tr>
+        <tr><td>Nightmare</td><td>18 / 27 Quests</td></tr>
+        <tr><td>Hell</td><td>0 / 27 Quests</td></tr></tbody>
+      </table></section>
+      <section class="card">
+      <h2>Waypoints Unlocked</h2>
+      <table class="data-table">
+        <tbody>
+        <tr><td>Normal</td><td>38 / 39 Waypoints</td></tr>
+        <tr><td>Nightmare</td><td>19 / 39 Waypoints</td></tr>
+        <tr><td>Hell</td><td>1 / 39 Waypoints</td></tr></tbody>
+      </table></section>
+      <section class="card full">
+      <h2>🛡️ Equipped Gear</h2>
+      <table class="data-table">
+        <thead><tr><th>Slot</th><th>Item</th><th>Quality</th><th>Type</th></tr></thead>
+        <tbody>
+        <tr>
+          <td class="slot">Helm</td>
+          <td class="highlight">Full Helm</td>
+          <td class="quality-unique">Unique</td>
+          <td class="muted">Helm</td>
+        </tr>
+        <tr>
+          <td class="slot">Belt</td>
+          <td class="highlight">Belt</td>
+          <td class="quality-set">Set</td>
+          <td class="muted">Belt</td>
+        </tr>
+        <tr>
+          <td class="slot">Gloves</td>
+          <td class="highlight">Heavy Gloves</td>
+          <td class="quality-set">Set</td>
+          <td class="muted">Gloves</td>
+        </tr>
+        <tr>
+          <td class="slot">Left Ring</td>
+          <td class="highlight">Ring</td>
+          <td class="quality-rare">Rare</td>
+          <td class="muted">Ring</td>
+        </tr>
+        <tr>
+          <td class="slot">Amulet</td>
+          <td class="highlight">Amulet</td>
+          <td class="quality-crafted">Crafted</td>
+          <td class="muted">Amulet</td>
+        </tr>
+        <tr>
+          <td class="slot">Right Ring</td>
+          <td class="highlight">Ring</td>
+          <td class="quality-crafted">Crafted</td>
+          <td class="muted">Ring</td>
+        </tr>
+        <tr>
+          <td class="slot">Armor</td>
+          <td class="highlight">Cuirass</td>
+          <td class="quality-set">Set</td>
+          <td class="muted">Body Armor</td>
+        </tr>
+        <tr>
+          <td class="slot">Boots</td>
+          <td class="highlight">Light Plate Boots</td>
+          <td class="quality-unique">Unique</td>
+          <td class="muted">Boots</td>
+        </tr>
+        <tr>
+          <td class="slot">Swap Weapon Right</td>
+          <td class="highlight">Hunter&#39;s Bow</td>
+          <td class="quality-unique">Unique</td>
+          <td class="muted">Bow</td>
+        </tr>
+        <tr>
+          <td class="slot">Swap Weapon Left</td>
+          <td class="highlight">Quiver of Arrows</td>
+          <td class="quality-normal">Normal</td>
+          <td class="muted">Ammunition</td>
+        </tr>
+        <tr>
+          <td class="slot">Right Hand Weapon</td>
+          <td class="highlight">Short Siege Bow</td>
+          <td class="quality-unique">Unique</td>
+          <td class="muted">Bow</td>
+        </tr></tbody>
+      </table></section>
+      <section class="card full">
+      <h2>🎒 Item Inventory Overview</h2>
+      <div class="category-grid">
+        <div class="category">
+          <h3>Ammunition</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Quiver of Arrows</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Amulet</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Amulet</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Belt</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Belt</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Body Armor</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Cuirass</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Boots</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Heavy Boots</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Light Plate Boots</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Bow</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Hunter&#39;s Bow</span></span> <span class="count">x2</span></li>
+          <li><span class="item-label"><span class="highlight">Short Siege Bow</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Charm</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Grand Charm</span></span> <span class="count">x4</span></li>
+          <li><span class="item-label"><span class="highlight">Large Charm</span></span> <span class="count">x2</span></li>
+          <li><span class="item-label"><span class="highlight">Small Charm</span></span> <span class="count">x8</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Gem</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Flawless Amethyst</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Flawless Diamond</span></span> <span class="count">x3</span></li>
+          <li><span class="item-label"><span class="highlight">Flawless Ruby</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Skull</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Gloves</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Heavy Gloves</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Helm</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Full Helm</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Potion</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Greater Healing Potion</span></span> <span class="count">x9</span></li>
+          <li><span class="item-label"><span class="highlight">Greater Mana Potion</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Super Mana Potion</span></span> <span class="count">x2</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Quest / Container</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Horadric Cube</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Quest Item</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Khalim&#39;s Brain</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Khalim&#39;s Eye</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Ring</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Ring</span></span> <span class="count">x2</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Rune</h3>
+          <ul class="item-list">
+          <li><img class="rune-icon" src="src/img/runes/r14.gif" alt="Dol Rune" width="26" height="28"><span class="item-label"><span class="highlight">Dol Rune</span> <span class="muted">(Lvl 14)</span></span> <span class="count">x1</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r13.gif" alt="Shael Rune" width="26" height="28"><span class="item-label"><span class="highlight">Shael Rune</span> <span class="muted">(Lvl 13)</span></span> <span class="count">x1</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r09.gif" alt="Ort Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ort Rune</span> <span class="muted">(Lvl 9)</span></span> <span class="count">x1</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r08.gif" alt="Ral Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ral Rune</span> <span class="muted">(Lvl 8)</span></span> <span class="count">x2</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r07.gif" alt="Tal Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tal Rune</span> <span class="muted">(Lvl 7)</span></span> <span class="count">x1</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r05.gif" alt="Eth Rune" width="26" height="28"><span class="item-label"><span class="highlight">Eth Rune</span> <span class="muted">(Lvl 5)</span></span> <span class="count">x1</span></li>
+          <li><img class="rune-icon" src="src/img/runes/r03.gif" alt="Tir Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tir Rune</span> <span class="muted">(Lvl 3)</span></span> <span class="count">x1</span></li></ul>
+        </div>
+        <div class="category">
+          <h3>Utility</h3>
+          <ul class="item-list">
+          <li><span class="item-label"><span class="highlight">Key</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Tome of Identify</span></span> <span class="count">x1</span></li>
+          <li><span class="item-label"><span class="highlight">Tome of Town Portal</span></span> <span class="count">x1</span></li></ul>
+        </div></div></section>
+    </div>
+    <footer>Total Item Count: 59</footer>
+  </div>
+</body>
+</html>

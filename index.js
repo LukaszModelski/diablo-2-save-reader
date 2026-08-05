@@ -99,7 +99,7 @@ function parseSaveFile(filePath) {
   categories.forEach(category => {
     console.log(`  \x1b[1m${category}\x1b[0m`);
     const entries = Object.entries(itemData.groupedByCategory[category]).sort(([nameA, a], [nameB, b]) => {
-      if (a.level != null && b.level != null) return a.level - b.level;
+      if (a.level != null && b.level != null) return b.level - a.level;
       return nameA.localeCompare(nameB);
     });
     entries.forEach(([name, { count, level }]) => {

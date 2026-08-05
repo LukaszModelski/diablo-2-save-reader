@@ -1,0 +1,10 @@
+{
+  "name": "diablo-2-save-reader",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Diablo II (.d2s) save file reader/parser",
+  "main": "index.js",
+  "scripts": {
+    "open-page": "node src/generate-html.js && open -a \"Google Chrome\" index.html"
+  }
+}
