@@ -18,6 +18,7 @@ const { parseSkills } = require('./skillParser');
 const { parseQuests } = require('./questParser');
 const { parseWaypoints } = require('./waypointParser');
 const { parseItems } = require('./itemParser');
+const { RUNEWORDS } = require('./runewords');
 
 function esc(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
@@ -146,6 +147,54 @@ function renderRunesTab(runeCounts, scannedFiles) {
       <ul class="item-list rune-list">${rows || '<li class="muted">No runes found across any save files</li>'}</ul>
       <p class="muted">Total Runes: <span class="highlight">${totalRunes}</span></p>
       <p class="muted">Scanned Files: ${scannedFiles.map(esc).join(', ')}</p>`;
+}
+
+function renderRunewordsTab(runewords, runeCounts) {
+  const byCategory = {};
+  runewords.forEach(rw => {
+    if (!byCategory[rw.category]) byCategory[rw.category] = [];
+    byCategory[rw.category].push(rw);
+  });
+
+  const categories = Object.keys(byCategory).sort();
+
+  const blocks = categories.map(category => {
+    const rows = byCategory[category]
+      .slice()
+      .sort((a, b) => a.clvlRequired - b.clvlRequired || a.name.localeCompare(b.name))
+      .map(rw => {
+        const runesHtml = rw.runes
+          .map(r => {
+            const owned = !!(runeCounts && runeCounts[`${r.name} Rune`]);
+            const cls = owned ? 'rune-owned' : 'muted';
+            return `${runeIcon(r.name, r.level)}<span class="${cls}">${esc(r.name)} (${r.level})</span>`;
+          })
+          .join(' <span class="muted">+</span> ');
+        const statsHtml = rw.stats.map(s => esc(s)).join('<br>');
+        return `
+        <tr>
+          <td class="highlight">${esc(rw.name)}</td>
+          <td class="rune-seq">${runesHtml}</td>
+          <td>${rw.sockets}</td>
+          <td>${rw.clvlRequired}</td>
+          <td class="muted">${statsHtml}</td>
+        </tr>`;
+      }).join('');
+
+    return `
+        <div class="category">
+          <h3>${esc(category)} <span class="muted">(${byCategory[category].length})</span></h3>
+          <table class="data-table runeword-table">
+            <thead><tr><th>Runeword</th><th>Runes</th><th>Sockets</th><th>Clvl</th><th>Stats</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+  }).join('');
+
+  return `
+      <h2>📜 Runewords (Non-Ladder, Classic v1.09&ndash;1.14b)</h2>
+      <p class="muted">${runewords.length} runewords across ${categories.length} item categories. Ladder-only runewords are excluded since they can't be created in classic single-player LoD.</p>
+      ${blocks}`;
 }
 
 function renderInventory(groupedByCategory, socketedInstances = []) {
@@ -398,6 +447,10 @@ function generateHtml(savesDir) {
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
   ul.rune-list li { font-size: 0.95rem; padding: 0.3rem 0; }
+  table.runeword-table { margin-bottom: 1.5rem; }
+  table.runeword-table td { vertical-align: top; }
+  .rune-seq img.rune-icon { display: inline-block; vertical-align: middle; margin-right: 2px; }
+  .rune-owned { color: #4caf50; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -408,10 +461,16 @@ function generateHtml(savesDir) {
     </header>
     <div class="tabs">${tabButtons}
       <button class="tab-btn" data-tab="runes">Runes</button>
+      <button class="tab-btn" data-tab="runewords">Runewords</button>
     </div>${tabPanels}
     <div class="tab-panel" id="tab-runes">
     <div class="grid">
       <section class="card full">${renderRunesTab(runeCounts, scannedFiles)}</section>
+    </div>
+    </div>
+    <div class="tab-panel" id="tab-runewords">
+    <div class="grid">
+      <section class="card full">${renderRunewordsTab(RUNEWORDS, runeCounts)}</section>
     </div>
     </div>
   </div>
