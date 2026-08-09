@@ -1,10 +1,12 @@
 /**
  * Diablo II (.d2s) Save File Reader / Parser
  * Generates a static index.html report instead of console output.
+ * Scans the saves/ directory: every save whose filename doesn't start with
+ * "mule" gets its own character tab, and a combined "Runes" tab aggregates
+ * rune counts across ALL save files (characters and mules alike).
  *
  * Usage:
  *   node src/generate-html.js
- *   node src/generate-html.js saves/Amazonka.d2s
  */
 
 const fs = require('fs');
@@ -16,6 +18,7 @@ const { parseSkills } = require('./skillParser');
 const { parseQuests } = require('./questParser');
 const { parseWaypoints } = require('./waypointParser');
 const { parseItems } = require('./itemParser');
+const { RUNEWORDS } = require('./runewords');
 
 function esc(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
@@ -77,12 +80,17 @@ function renderProgress(title, data, unitLabel) {
       </table>`;
 }
 
+function socketedSuffix(socketedItems) {
+  if (!socketedItems || !socketedItems.length) return '';
+  return ` <span class="muted">(${socketedItems.map(s => esc(s.name)).join(', ')})</span>`;
+}
+
 function renderEquipped(equippedItems) {
   const rows = equippedItems.length
     ? equippedItems.map(it => `
         <tr>
           <td class="slot">${esc(it.slotName)}</td>
-          <td class="highlight">${esc(it.name)}</td>
+          <td class="highlight">${esc(it.name)}${socketedSuffix(it.socketedItems)}</td>
           <td class="quality-${esc(it.quality.toLowerCase())}">${esc(it.quality)}</td>
           <td class="muted">${esc(it.type)}</td>
         </tr>`).join('')
@@ -102,10 +110,104 @@ function runeIcon(name, level) {
   return `<img class="rune-icon" src="src/img/runes/${code}.gif" alt="${esc(name)}" width="26" height="28">`;
 }
 
-function renderInventory(groupedByCategory) {
-  const categories = Object.keys(groupedByCategory).sort();
+// Scans every .d2s file in the saves directory and sums up rune counts across all of them
+function aggregateRunesFromAllSaves(savesDir) {
+  const files = fs.readdirSync(savesDir).filter(f => f.toLowerCase().endsWith('.d2s'));
+  const runeCounts = {};
+  const scannedFiles = [];
+
+  files.forEach(file => {
+    try {
+      const buf = fs.readFileSync(path.join(savesDir, file));
+      const itemData = parseItems(buf);
+      scannedFiles.push(file);
+      // Count every rune the file has, whether it's sitting in the stash or
+      // socketed into gear — this total is independent of the per-character
+      // inventory display, which folds socketed runes into their host item.
+      itemData.items.filter(it => it.type === 'Rune').forEach(it => {
+        if (!runeCounts[it.name]) runeCounts[it.name] = { count: 0, level: it.level };
+        runeCounts[it.name].count += 1;
+      });
+    } catch (e) {
+      // Skip files that fail to parse
+    }
+  });
+
+  return { runeCounts, scannedFiles };
+}
+
+function renderRunesTab(runeCounts, scannedFiles) {
+  const entries = Object.entries(runeCounts).sort(([, a], [, b]) => b.level - a.level);
+  const totalRunes = entries.reduce((sum, [, d]) => sum + d.count, 0);
+  const rows = entries.map(([name, { count, level }]) => `
+        <li>${runeIcon(name, level)}<span class="item-label"><span class="highlight">${esc(name)}</span> <span class="muted">(Lvl ${level})</span></span><span class="count">x${count}</span></li>`).join('');
+
+  return `
+      <h2>💎 Runes (All Saves Combined)</h2>
+      <ul class="item-list rune-list">${rows || '<li class="muted">No runes found across any save files</li>'}</ul>
+      <p class="muted">Total Runes: <span class="highlight">${totalRunes}</span></p>
+      <p class="muted">Scanned Files: ${scannedFiles.map(esc).join(', ')}</p>`;
+}
+
+function renderRunewordsTab(runewords, runeCounts) {
+  const byCategory = {};
+  runewords.forEach(rw => {
+    if (!byCategory[rw.category]) byCategory[rw.category] = [];
+    byCategory[rw.category].push(rw);
+  });
+
+  const categories = Object.keys(byCategory).sort();
+
   const blocks = categories.map(category => {
-    const entries = Object.entries(groupedByCategory[category]).sort(([nameA, a], [nameB, b]) => {
+    const rows = byCategory[category]
+      .slice()
+      .sort((a, b) => a.clvlRequired - b.clvlRequired || a.name.localeCompare(b.name))
+      .map(rw => {
+        const runesHtml = rw.runes
+          .map(r => {
+            const owned = !!(runeCounts && runeCounts[`${r.name} Rune`]);
+            const cls = owned ? 'rune-owned' : 'muted';
+            return `${runeIcon(r.name, r.level)}<span class="${cls}">${esc(r.name)} (${r.level})</span>`;
+          })
+          .join(' <span class="muted">+</span> ');
+        const statsHtml = rw.stats.map(s => esc(s)).join('<br>');
+        return `
+        <tr>
+          <td class="highlight">${esc(rw.name)}</td>
+          <td class="rune-seq">${runesHtml}</td>
+          <td>${rw.sockets}</td>
+          <td>${rw.clvlRequired}</td>
+          <td class="muted">${statsHtml}</td>
+        </tr>`;
+      }).join('');
+
+    return `
+        <div class="category">
+          <h3>${esc(category)} <span class="muted">(${byCategory[category].length})</span></h3>
+          <table class="data-table runeword-table">
+            <thead><tr><th>Runeword</th><th>Runes</th><th>Sockets</th><th>Clvl</th><th>Stats</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+  }).join('');
+
+  return `
+      <h2>📜 Runewords (Non-Ladder, Classic v1.09&ndash;1.14b)</h2>
+      <p class="muted">${runewords.length} runewords across ${categories.length} item categories. Ladder-only runewords are excluded since they can't be created in classic single-player LoD.</p>
+      ${blocks}`;
+}
+
+function renderInventory(groupedByCategory, socketedInstances = []) {
+  const instancesByCategory = {};
+  socketedInstances.forEach(inst => {
+    if (!instancesByCategory[inst.category]) instancesByCategory[inst.category] = [];
+    instancesByCategory[inst.category].push(inst);
+  });
+
+  const categories = Array.from(new Set([...Object.keys(groupedByCategory), ...Object.keys(instancesByCategory)])).sort();
+
+  const blocks = categories.map(category => {
+    const entries = Object.entries(groupedByCategory[category] || {}).sort(([nameA, a], [nameB, b]) => {
       if (a.level != null && b.level != null) return b.level - a.level;
       return nameA.localeCompare(nameB);
     });
@@ -114,10 +216,17 @@ function renderInventory(groupedByCategory) {
       return `
           <li>${icon}<span class="item-label"><span class="highlight">${esc(name)}</span>${level != null ? ` <span class="muted">(Lvl ${level})</span>` : ''}</span> <span class="count">x${count}</span></li>`;
     }).join('');
+
+    const socketedItems = (instancesByCategory[category] || [])
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(inst => `
+          <li><span class="item-label"><span class="highlight">${esc(inst.name)}</span>${socketedSuffix(inst.socketedItems)}</span></li>`)
+      .join('');
+
     return `
         <div class="category">
           <h3>${esc(category)}</h3>
-          <ul class="item-list">${items}</ul>
+          <ul class="item-list">${items}${socketedItems}</ul>
         </div>`;
   }).join('');
 
@@ -126,9 +235,11 @@ function renderInventory(groupedByCategory) {
       <div class="category-grid">${blocks}</div>`;
 }
 
-function generateHtml(filePath) {
-  const buf = fs.readFileSync(filePath);
+function slugify(name) {
+  return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'character';
+}
 
+function renderCharacterPanel(fileName, buf) {
   const header = parseHeader(buf);
   const stats = parseStats(buf);
   const skills = parseSkills(buf, header.classId);
@@ -136,11 +247,44 @@ function generateHtml(filePath) {
   const waypoints = parseWaypoints(buf);
   const itemData = parseItems(buf);
 
+  const content = `
+    <div class="grid">
+      <section class="card">${renderCharacterSummary(header)}</section>
+      <section class="card">${renderStats(stats)}</section>
+      <section class="card full">${renderSkills(skills)}</section>
+      <section class="card">${renderProgress('Difficulty &amp; Quest Progress', quests, 'Quests')}</section>
+      <section class="card">${renderProgress('Waypoints Unlocked', waypoints, 'Waypoints')}</section>
+      <section class="card full">${renderEquipped(itemData.equippedItems)}</section>
+      <section class="card full">${renderInventory(itemData.groupedByCategory, itemData.socketedInstances)}</section>
+    </div>
+    <footer>${esc(fileName)} (${buf.length} bytes) &mdash; Total Item Count: ${itemData.totalItems}</footer>`;
+
+  return { name: header.name, content };
+}
+
+function generateHtml(savesDir) {
+  const files = fs.readdirSync(savesDir).filter(f => f.toLowerCase().endsWith('.d2s'));
+  const characterFiles = files.filter(f => !f.toLowerCase().startsWith('mule'));
+
+  const characters = characterFiles.map(file => {
+    const buf = fs.readFileSync(path.join(savesDir, file));
+    const { name, content } = renderCharacterPanel(file, buf);
+    return { file, name, slug: slugify(name), content };
+  });
+
+  const { runeCounts, scannedFiles } = aggregateRunesFromAllSaves(savesDir);
+
+  const tabButtons = characters.map((c, i) => `
+      <button class="tab-btn${i === 0 ? ' active' : ''}" data-tab="${esc(c.slug)}">${esc(c.name)}</button>`).join('');
+  const tabPanels = characters.map((c, i) => `
+    <div class="tab-panel${i === 0 ? ' active' : ''}" id="tab-${esc(c.slug)}">${c.content}
+    </div>`).join('');
+
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${esc(header.name)} - Diablo II Save Report</title>
+<title>Diablo II Save Report</title>
 <style>
   :root {
     --bg: #16130f;
@@ -280,41 +424,81 @@ function generateHtml(filePath) {
     margin-top: 2rem;
     font-size: 0.8rem;
   }
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--highlight);
+    border-bottom-color: var(--highlight);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  ul.rune-list li { font-size: 0.95rem; padding: 0.3rem 0; }
+  table.runeword-table { margin-bottom: 1.5rem; }
+  table.runeword-table td { vertical-align: top; }
+  .rune-seq img.rune-icon { display: inline-block; vertical-align: middle; margin-right: 2px; }
+  .rune-owned { color: #4caf50; font-weight: 600; }
 </style>
 </head>
 <body>
   <div class="page">
     <header class="title-bar">
       <h1>DIABLO II SAVE FILE PARSER</h1>
-      <p>${esc(path.basename(filePath))} (${buf.length} bytes)</p>
+      <p>${characters.length} character${characters.length === 1 ? '' : 's'} &middot; ${scannedFiles.length} save file${scannedFiles.length === 1 ? '' : 's'} scanned</p>
     </header>
+    <div class="tabs">${tabButtons}
+      <button class="tab-btn" data-tab="runes">Runes</button>
+      <button class="tab-btn" data-tab="runewords">Runewords</button>
+    </div>${tabPanels}
+    <div class="tab-panel" id="tab-runes">
     <div class="grid">
-      <section class="card">${renderCharacterSummary(header)}</section>
-      <section class="card">${renderStats(stats)}</section>
-      <section class="card full">${renderSkills(skills)}</section>
-      <section class="card">${renderProgress('Difficulty &amp; Quest Progress', quests, 'Quests')}</section>
-      <section class="card">${renderProgress('Waypoints Unlocked', waypoints, 'Waypoints')}</section>
-      <section class="card full">${renderEquipped(itemData.equippedItems)}</section>
-      <section class="card full">${renderInventory(itemData.groupedByCategory)}</section>
+      <section class="card full">${renderRunesTab(runeCounts, scannedFiles)}</section>
     </div>
-    <footer>Total Item Count: ${itemData.totalItems}</footer>
+    </div>
+    <div class="tab-panel" id="tab-runewords">
+    <div class="grid">
+      <section class="card full">${renderRunewordsTab(RUNEWORDS, runeCounts)}</section>
+    </div>
+    </div>
   </div>
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>`;
 }
 
 // CLI Execution
-const args = process.argv.slice(2);
 const projectRoot = path.join(__dirname, '..');
-const targetFile = args[0] || path.join(projectRoot, 'saves', 'Amazonka.d2s');
+const savesDir = path.join(projectRoot, 'saves');
 const outputFile = path.join(projectRoot, 'index.html');
 
-if (!fs.existsSync(targetFile)) {
-  console.error(`Error: Save file not found at ${targetFile}`);
+if (!fs.existsSync(savesDir)) {
+  console.error(`Error: Saves directory not found at ${savesDir}`);
   process.exit(1);
 }
 
-const html = generateHtml(targetFile);
+const html = generateHtml(savesDir);
 fs.writeFileSync(outputFile, html);
 console.log(`Report written to ${outputFile}`);
 console.log(`Open it with: open ${outputFile}`);
