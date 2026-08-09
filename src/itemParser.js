@@ -6,7 +6,12 @@ const { EQUIPPED_SLOTS, STORED_LOCATIONS, QUALITIES, ITEM_DATABASE } = require('
 const { getBits } = require('./bitReader');
 
 function parseItems(buf) {
-  const jmPos = 853;
+  // Item list header ("JM" + 16-bit item count) is not at a fixed offset — its
+  // position shifts with the size of the preceding quest/waypoint/attribute data.
+  const jmPos = buf.indexOf(Buffer.from([0x4A, 0x4D]), 700);
+  if (jmPos === -1) {
+    return { totalItems: 0, items: [], equippedItems: [], storedItems: [], groupedSummary: {}, groupedByCategory: {} };
+  }
   const itemCount = buf.readUInt16LE(jmPos + 2);
 
   let currOffset = jmPos + 4;

@@ -142,40 +142,68 @@
     margin-top: 2rem;
     font-size: 0.8rem;
   }
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--highlight);
+    border-bottom-color: var(--highlight);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  ul.rune-list li { font-size: 0.95rem; padding: 0.3rem 0; }
 </style>
 </head>
 <body>
   <div class="page">
     <header class="title-bar">
       <h1>DIABLO II SAVE FILE PARSER</h1>
-      <p>Amazonka.d2s (2442 bytes)</p>
+      <p>Amazonka.d2s (2229 bytes)</p>
     </header>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="runes">Runes</button>
+    </div>
+    <div class="tab-panel active" id="tab-overview">
     <div class="grid">
       <section class="card">
       <h2>Character Summary</h2>
       <dl class="kv">
         <dt>Name</dt><dd class="highlight">Amazonka</dd>
         <dt>Class</dt><dd class="gold">Amazon</dd>
-        <dt>Level</dt><dd class="highlight">60</dd>
+        <dt>Level</dt><dd class="highlight">67</dd>
         <dt>Title</dt><dd class="magic">Matriarch / Patriarch</dd>
         <dt>Expansion (LoD)</dt><dd>Yes</dd>
         <dt>Mode</dt><dd class="">Softcore</dd>
         <dt>Has Died</dt><dd>Yes</dd>
         <dt>Version ID</dt><dd>96 (0x60)</dd>
-        <dt>Last Played</dt><dd>8/4/2026, 5:17:26 PM</dd>
+        <dt>Last Played</dt><dd>8/8/2026, 1:44:01 PM</dd>
       </dl></section>
       <section class="card">
       <h2>Base &amp; Total Attributes</h2>
       <dl class="kv">
         <dt>Strength</dt><dd>59</dd>
         <dt>Dexterity</dt><dd>30</dd>
-        <dt>Energy</dt><dd>24</dd>
-        <dt>Hit Points</dt><dd class="hp">418.0 / 292.0 HP</dd>
-        <dt>Mana</dt><dd class="mana">211.0 / 103.5 MP</dd>
-        <dt>Stamina</dt><dd>171.0 / 171.0</dd>
-        <dt>Experience</dt><dd>126,567,800 XP</dd>
-        <dt>Gold</dt><dd class="gold">35,304 (Inv) + 243,901 (Stash) = 279,205 Total</dd>
-        <dt>Unassigned</dt><dd class="gold">47 Stat Points | 12 Skill Points</dd>
+        <dt>Energy</dt><dd>29</dd>
+        <dt>Hit Points</dt><dd class="hp">462.0 / 336.0 HP</dd>
+        <dt>Mana</dt><dd class="mana">221.5 / 114.0 MP</dd>
+        <dt>Stamina</dt><dd>188.0 / 188.0</dd>
+        <dt>Experience</dt><dd>232,632,508 XP</dd>
+        <dt>Gold</dt><dd class="gold">146,478 (Inv) + 91,753 (Stash) = 238,231 Total</dd>
+        <dt>Unassigned</dt><dd class="gold">57 Stat Points | 11 Skill Points</dd>
       </dl></section>
       <section class="card full">
       <h2>Skill Allocation</h2>
@@ -183,28 +211,29 @@
         <thead><tr><th>Skill</th><th>Tree</th><th>Level</th></tr></thead>
         <tbody>
         <tr><td>Magic Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
+        <tr><td>Fire Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">2</td></tr>
         <tr><td>Cold Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
-        <tr><td>Multiple Shot</td><td class="muted">Bow and Crossbow</td><td class="highlight">13</td></tr>
-        <tr><td>Ice Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
-        <tr><td>Guided Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">2</td></tr>
+        <tr><td>Guided Arrow</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
         <tr><td>Strafe</td><td class="muted">Bow and Crossbow</td><td class="highlight">1</td></tr>
         <tr><td>Critical Strike</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
-        <tr><td>Dodge</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
-        <tr><td>Decoy</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
-        <tr><td>Evade</td><td class="muted">Passive and Magic</td><td class="highlight">13</td></tr>
-        <tr><td>Jab</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
-        <tr><td>Poison Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
-        <tr><td>Impale</td><td class="muted">Javelin and Spear</td><td class="highlight">1</td></tr>
-        <tr><td>Plague Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">2</td></tr>
-        <tr><td>Fend</td><td class="muted">Javelin and Spear</td><td class="highlight">13</td></tr></tbody>
+        <tr><td>Dodge</td><td class="muted">Passive and Magic</td><td class="highlight">15</td></tr>
+        <tr><td>Penetrate</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Evade</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Valkyrie</td><td class="muted">Passive and Magic</td><td class="highlight">1</td></tr>
+        <tr><td>Power Strike</td><td class="muted">Javelin and Spear</td><td class="highlight">6</td></tr>
+        <tr><td>Poison Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">15</td></tr>
+        <tr><td>Charged Strike</td><td class="muted">Javelin and Spear</td><td class="highlight">74</td></tr>
+        <tr><td>Plague Javelin</td><td class="muted">Javelin and Spear</td><td class="highlight">77</td></tr>
+        <tr><td>Fend</td><td class="muted">Javelin and Spear</td><td class="highlight">44</td></tr>
+        <tr><td>Lightning Fury</td><td class="muted">Javelin and Spear</td><td class="highlight">74</td></tr></tbody>
       </table>
-      <p class="muted">Total Invested Skill Points: <span class="highlight">53</span></p></section>
+      <p class="muted">Total Invested Skill Points: <span class="highlight">315</span></p></section>
       <section class="card">
       <h2>Difficulty &amp;amp; Quest Progress</h2>
       <table class="data-table">
         <tbody>
         <tr><td>Normal</td><td>26 / 27 Quests</td></tr>
-        <tr><td>Nightmare</td><td>18 / 27 Quests</td></tr>
+        <tr><td>Nightmare</td><td>25 / 27 Quests</td></tr>
         <tr><td>Hell</td><td>0 / 27 Quests</td></tr></tbody>
       </table></section>
       <section class="card">
@@ -212,7 +241,7 @@
       <table class="data-table">
         <tbody>
         <tr><td>Normal</td><td>38 / 39 Waypoints</td></tr>
-        <tr><td>Nightmare</td><td>19 / 39 Waypoints</td></tr>
+        <tr><td>Nightmare</td><td>28 / 39 Waypoints</td></tr>
         <tr><td>Hell</td><td>1 / 39 Waypoints</td></tr></tbody>
       </table></section>
       <section class="card full">
@@ -313,13 +342,12 @@
         <div class="category">
           <h3>Boots</h3>
           <ul class="item-list">
-          <li><span class="item-label"><span class="highlight">Heavy Boots</span></span> <span class="count">x1</span></li>
           <li><span class="item-label"><span class="highlight">Light Plate Boots</span></span> <span class="count">x1</span></li></ul>
         </div>
         <div class="category">
           <h3>Bow</h3>
           <ul class="item-list">
-          <li><span class="item-label"><span class="highlight">Hunter&#39;s Bow</span></span> <span class="count">x2</span></li>
+          <li><span class="item-label"><span class="highlight">Hunter&#39;s Bow</span></span> <span class="count">x1</span></li>
           <li><span class="item-label"><span class="highlight">Short Siege Bow</span></span> <span class="count">x1</span></li></ul>
         </div>
         <div class="category">
@@ -327,15 +355,7 @@
           <ul class="item-list">
           <li><span class="item-label"><span class="highlight">Grand Charm</span></span> <span class="count">x4</span></li>
           <li><span class="item-label"><span class="highlight">Large Charm</span></span> <span class="count">x2</span></li>
-          <li><span class="item-label"><span class="highlight">Small Charm</span></span> <span class="count">x8</span></li></ul>
-        </div>
-        <div class="category">
-          <h3>Gem</h3>
-          <ul class="item-list">
-          <li><span class="item-label"><span class="highlight">Flawless Amethyst</span></span> <span class="count">x1</span></li>
-          <li><span class="item-label"><span class="highlight">Flawless Diamond</span></span> <span class="count">x3</span></li>
-          <li><span class="item-label"><span class="highlight">Flawless Ruby</span></span> <span class="count">x1</span></li>
-          <li><span class="item-label"><span class="highlight">Skull</span></span> <span class="count">x1</span></li></ul>
+          <li><span class="item-label"><span class="highlight">Small Charm</span></span> <span class="count">x9</span></li></ul>
         </div>
         <div class="category">
           <h3>Gloves</h3>
@@ -360,12 +380,6 @@
           <li><span class="item-label"><span class="highlight">Horadric Cube</span></span> <span class="count">x1</span></li></ul>
         </div>
         <div class="category">
-          <h3>Quest Item</h3>
-          <ul class="item-list">
-          <li><span class="item-label"><span class="highlight">Khalim&#39;s Brain</span></span> <span class="count">x1</span></li>
-          <li><span class="item-label"><span class="highlight">Khalim&#39;s Eye</span></span> <span class="count">x1</span></li></ul>
-        </div>
-        <div class="category">
           <h3>Ring</h3>
           <ul class="item-list">
           <li><span class="item-label"><span class="highlight">Ring</span></span> <span class="count">x2</span></li></ul>
@@ -373,13 +387,7 @@
         <div class="category">
           <h3>Rune</h3>
           <ul class="item-list">
-          <li><img class="rune-icon" src="src/img/runes/r14.gif" alt="Dol Rune" width="26" height="28"><span class="item-label"><span class="highlight">Dol Rune</span> <span class="muted">(Lvl 14)</span></span> <span class="count">x1</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r13.gif" alt="Shael Rune" width="26" height="28"><span class="item-label"><span class="highlight">Shael Rune</span> <span class="muted">(Lvl 13)</span></span> <span class="count">x1</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r09.gif" alt="Ort Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ort Rune</span> <span class="muted">(Lvl 9)</span></span> <span class="count">x1</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r08.gif" alt="Ral Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ral Rune</span> <span class="muted">(Lvl 8)</span></span> <span class="count">x2</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r07.gif" alt="Tal Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tal Rune</span> <span class="muted">(Lvl 7)</span></span> <span class="count">x1</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r05.gif" alt="Eth Rune" width="26" height="28"><span class="item-label"><span class="highlight">Eth Rune</span> <span class="muted">(Lvl 5)</span></span> <span class="count">x1</span></li>
-          <li><img class="rune-icon" src="src/img/runes/r03.gif" alt="Tir Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tir Rune</span> <span class="muted">(Lvl 3)</span></span> <span class="count">x1</span></li></ul>
+          <li><img class="rune-icon" src="src/img/runes/r13.gif" alt="Shael Rune" width="26" height="28"><span class="item-label"><span class="highlight">Shael Rune</span> <span class="muted">(Lvl 13)</span></span> <span class="count">x2</span></li></ul>
         </div>
         <div class="category">
           <h3>Utility</h3>
@@ -389,7 +397,45 @@
           <li><span class="item-label"><span class="highlight">Tome of Town Portal</span></span> <span class="count">x1</span></li></ul>
         </div></div></section>
     </div>
-    <footer>Total Item Count: 59</footer>
+    <footer>Total Item Count: 44</footer>
+    </div>
+    <div class="tab-panel" id="tab-runes">
+    <div class="grid">
+      <section class="card full">
+      <h2>💎 Runes (All Saves Combined)</h2>
+      <ul class="item-list rune-list">
+        <li><img class="rune-icon" src="src/img/runes/r21.gif" alt="Pul Rune" width="26" height="28"><span class="item-label"><span class="highlight">Pul Rune</span> <span class="muted">(Lvl 21)</span></span><span class="count">x1</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r20.gif" alt="Lem Rune" width="26" height="28"><span class="item-label"><span class="highlight">Lem Rune</span> <span class="muted">(Lvl 20)</span></span><span class="count">x1</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r16.gif" alt="Io Rune" width="26" height="28"><span class="item-label"><span class="highlight">Io Rune</span> <span class="muted">(Lvl 16)</span></span><span class="count">x1</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r15.gif" alt="Hel Rune" width="26" height="28"><span class="item-label"><span class="highlight">Hel Rune</span> <span class="muted">(Lvl 15)</span></span><span class="count">x1</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r14.gif" alt="Dol Rune" width="26" height="28"><span class="item-label"><span class="highlight">Dol Rune</span> <span class="muted">(Lvl 14)</span></span><span class="count">x6</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r13.gif" alt="Shael Rune" width="26" height="28"><span class="item-label"><span class="highlight">Shael Rune</span> <span class="muted">(Lvl 13)</span></span><span class="count">x6</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r12.gif" alt="Sol Rune" width="26" height="28"><span class="item-label"><span class="highlight">Sol Rune</span> <span class="muted">(Lvl 12)</span></span><span class="count">x3</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r11.gif" alt="Amn Rune" width="26" height="28"><span class="item-label"><span class="highlight">Amn Rune</span> <span class="muted">(Lvl 11)</span></span><span class="count">x8</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r10.gif" alt="Thul Rune" width="26" height="28"><span class="item-label"><span class="highlight">Thul Rune</span> <span class="muted">(Lvl 10)</span></span><span class="count">x9</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r09.gif" alt="Ort Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ort Rune</span> <span class="muted">(Lvl 9)</span></span><span class="count">x22</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r08.gif" alt="Ral Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ral Rune</span> <span class="muted">(Lvl 8)</span></span><span class="count">x17</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r07.gif" alt="Tal Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tal Rune</span> <span class="muted">(Lvl 7)</span></span><span class="count">x22</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r06.gif" alt="Ith Rune" width="26" height="28"><span class="item-label"><span class="highlight">Ith Rune</span> <span class="muted">(Lvl 6)</span></span><span class="count">x17</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r05.gif" alt="Eth Rune" width="26" height="28"><span class="item-label"><span class="highlight">Eth Rune</span> <span class="muted">(Lvl 5)</span></span><span class="count">x20</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r04.gif" alt="Nef Rune" width="26" height="28"><span class="item-label"><span class="highlight">Nef Rune</span> <span class="muted">(Lvl 4)</span></span><span class="count">x15</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r03.gif" alt="Tir Rune" width="26" height="28"><span class="item-label"><span class="highlight">Tir Rune</span> <span class="muted">(Lvl 3)</span></span><span class="count">x25</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r02.gif" alt="Eld Rune" width="26" height="28"><span class="item-label"><span class="highlight">Eld Rune</span> <span class="muted">(Lvl 2)</span></span><span class="count">x9</span></li>
+        <li><img class="rune-icon" src="src/img/runes/r01.gif" alt="El Rune" width="26" height="28"><span class="item-label"><span class="highlight">El Rune</span> <span class="muted">(Lvl 1)</span></span><span class="count">x16</span></li></ul>
+      <p class="muted">Total Runes: <span class="highlight">199</span></p>
+      <p class="muted">Scanned Files: Amazonka.d2s, Druid.d2s, Mule-armory.d2s, Mule-runes.d2s, Mule-socket.d2s, Mule-stones.d2s, Necro.d2s, Pala.d2s, mule-amulets.d2s, mule-armoryy.d2s, mule-armoryyy.d2s, mule-armoryyyy.d2s, mule-charms.d2s, mule-rings.d2s, mule-runess.d2s, mule-sets.d2s, mule-sett.d2s, mule-sockett.d2s, mule-stoness.d2s, mule-stonesss.d2s</p></section>
+    </div>
+    </div>
   </div>
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>

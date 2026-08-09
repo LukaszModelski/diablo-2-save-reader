@@ -102,6 +102,44 @@ function runeIcon(name, level) {
   return `<img class="rune-icon" src="src/img/runes/${code}.gif" alt="${esc(name)}" width="26" height="28">`;
 }
 
+// Scans every .d2s file in the saves directory and sums up rune counts across all of them
+function aggregateRunesFromAllSaves(savesDir) {
+  const files = fs.readdirSync(savesDir).filter(f => f.toLowerCase().endsWith('.d2s'));
+  const runeCounts = {};
+  const scannedFiles = [];
+
+  files.forEach(file => {
+    try {
+      const buf = fs.readFileSync(path.join(savesDir, file));
+      const itemData = parseItems(buf);
+      scannedFiles.push(file);
+      const runes = itemData.groupedByCategory['Rune'];
+      if (!runes) return;
+      Object.entries(runes).forEach(([name, { count, level }]) => {
+        if (!runeCounts[name]) runeCounts[name] = { count: 0, level };
+        runeCounts[name].count += count;
+      });
+    } catch (e) {
+      // Skip files that fail to parse
+    }
+  });
+
+  return { runeCounts, scannedFiles };
+}
+
+function renderRunesTab(runeCounts, scannedFiles) {
+  const entries = Object.entries(runeCounts).sort(([, a], [, b]) => b.level - a.level);
+  const totalRunes = entries.reduce((sum, [, d]) => sum + d.count, 0);
+  const rows = entries.map(([name, { count, level }]) => `
+        <li>${runeIcon(name, level)}<span class="item-label"><span class="highlight">${esc(name)}</span> <span class="muted">(Lvl ${level})</span></span><span class="count">x${count}</span></li>`).join('');
+
+  return `
+      <h2>💎 Runes (All Saves Combined)</h2>
+      <ul class="item-list rune-list">${rows || '<li class="muted">No runes found across any save files</li>'}</ul>
+      <p class="muted">Total Runes: <span class="highlight">${totalRunes}</span></p>
+      <p class="muted">Scanned Files: ${scannedFiles.map(esc).join(', ')}</p>`;
+}
+
 function renderInventory(groupedByCategory) {
   const categories = Object.keys(groupedByCategory).sort();
   const blocks = categories.map(category => {
@@ -135,6 +173,11 @@ function generateHtml(filePath) {
   const quests = parseQuests(buf);
   const waypoints = parseWaypoints(buf);
   const itemData = parseItems(buf);
+
+  const savesDir = path.join(__dirname, '..', 'saves');
+  const { runeCounts, scannedFiles } = fs.existsSync(savesDir)
+    ? aggregateRunesFromAllSaves(savesDir)
+    : { runeCounts: {}, scannedFiles: [] };
 
   return `<!doctype html>
 <html lang="en">
@@ -280,6 +323,29 @@ function generateHtml(filePath) {
     margin-top: 2rem;
     font-size: 0.8rem;
   }
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--highlight);
+    border-bottom-color: var(--highlight);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  ul.rune-list li { font-size: 0.95rem; padding: 0.3rem 0; }
 </style>
 </head>
 <body>
@@ -288,6 +354,11 @@ function generateHtml(filePath) {
       <h1>DIABLO II SAVE FILE PARSER</h1>
       <p>${esc(path.basename(filePath))} (${buf.length} bytes)</p>
     </header>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="runes">Runes</button>
+    </div>
+    <div class="tab-panel active" id="tab-overview">
     <div class="grid">
       <section class="card">${renderCharacterSummary(header)}</section>
       <section class="card">${renderStats(stats)}</section>
@@ -298,7 +369,23 @@ function generateHtml(filePath) {
       <section class="card full">${renderInventory(itemData.groupedByCategory)}</section>
     </div>
     <footer>Total Item Count: ${itemData.totalItems}</footer>
+    </div>
+    <div class="tab-panel" id="tab-runes">
+    <div class="grid">
+      <section class="card full">${renderRunesTab(runeCounts, scannedFiles)}</section>
+    </div>
+    </div>
   </div>
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>`;
 }
