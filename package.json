@@ -5,6 +5,7 @@
   "description": "Diablo II (.d2s) save file reader/parser",
   "main": "index.js",
   "scripts": {
-    "open-page": "node src/generate-html.js && open -a \"Google Chrome\" index.html"
+    "open-page": "node src/generate-html.js && open -a \"Google Chrome\" index.html",
+    "merge-gems": "node src/merge-gems.js"
   }
 }
