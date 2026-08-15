@@ -264,6 +264,9 @@ function renderCharacterPanel(fileName, buf) {
 
 function generateHtml(savesDir) {
   const files = fs.readdirSync(savesDir).filter(f => f.toLowerCase().endsWith('.d2s'));
+  if (files.length === 0) {
+    throw new Error(`No Diablo II save files (.d2s) found in "${savesDir}".`);
+  }
   const characterFiles = files.filter(f => !f.toLowerCase().startsWith('mule'));
 
   const characters = characterFiles.map(file => {
@@ -488,17 +491,31 @@ function generateHtml(savesDir) {
 </html>`;
 }
 
-// CLI Execution
-const projectRoot = path.join(__dirname, '..');
-const savesDir = path.join(projectRoot, 'saves');
-const outputFile = path.join(projectRoot, 'index.html');
-
-if (!fs.existsSync(savesDir)) {
-  console.error(`Error: Saves directory not found at ${savesDir}`);
-  process.exit(1);
+function main(savesDir, outputFile) {
+  if (!fs.existsSync(savesDir)) throw new Error(`Saves directory not found at ${savesDir}`);
+  const html = generateHtml(savesDir);
+  fs.writeFileSync(outputFile, html);
+  console.log(`Report written to ${outputFile}`);
+  return outputFile;
 }
 
-const html = generateHtml(savesDir);
-fs.writeFileSync(outputFile, html);
-console.log(`Report written to ${outputFile}`);
-console.log(`Open it with: open ${outputFile}`);
+module.exports = { generateHtml, main };
+
+// CLI Execution
+if (require.main === module) {
+  const pathArg = process.argv[2];
+  if (!pathArg) {
+    console.error('Usage: node src/generate-html.js <path-to-saves-folder>');
+    process.exit(1);
+  }
+  const projectRoot = path.join(__dirname, '..');
+  const savesDir = path.resolve(pathArg);
+  const outputFile = path.join(projectRoot, 'index.html');
+  try {
+    main(savesDir, outputFile);
+    console.log(`Open it with: open ${outputFile}`);
+  } catch (err) {
+    console.error('Error:', err.message);
+    process.exit(1);
+  }
+}

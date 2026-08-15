@@ -6,22 +6,19 @@
  * mule-stonesss. Each mule is filled to capacity (Inventory + Stash + Cube)
  * before overflow moves to the next one in the list.
  *
- * Always backs up saves/ before writing anything.
+ * Always backs up the target saves folder before writing anything.
  *
  * Usage:
- *   node src/merge-gems.js            (writes changes)
- *   node src/merge-gems.js --dry-run  (prints the plan, touches nothing)
+ *   node src/merge-gems.js [path-to-saves-folder]            (writes changes)
+ *   node src/merge-gems.js [path-to-saves-folder] --dry-run  (prints the plan, touches nothing)
+ *   (path defaults to this project's own saves/ folder when omitted)
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const PROJECT_ROOT = path.join(__dirname, '..');
-const SAVES_DIR = path.join(PROJECT_ROOT, 'saves');
 const { ITEM_DATABASE } = require('./constants');
 const { getBits } = require('./bitReader');
-
-const DRY_RUN = process.argv.includes('--dry-run');
 
 // Destination mules, in fill priority order (first is filled to capacity before
 // overflow moves to the next). Matched against saves/ case-sensitively, since
@@ -141,10 +138,15 @@ function tierName(fam, tier) {
   return ['Chipped ', 'Flawed ', '', 'Flawless ', 'Perfect '][tier] + fam;
 }
 
-function run() {
-  const files = fs.readdirSync(SAVES_DIR).filter(f => f.toLowerCase().endsWith('.d2s'));
+function run(savesDir, { dryRun = false } = {}) {
+  if (!fs.existsSync(savesDir)) throw new Error(`Saves directory not found at ${savesDir}`);
+
+  const files = fs.readdirSync(savesDir).filter(f => f.toLowerCase().endsWith('.d2s'));
+  if (files.length === 0) {
+    throw new Error(`No Diablo II save files (.d2s) found in "${savesDir}".`);
+  }
   const buffers = {};
-  files.forEach(f => { buffers[f] = fs.readFileSync(path.join(SAVES_DIR, f)); });
+  files.forEach(f => { buffers[f] = fs.readFileSync(path.join(savesDir, f)); });
 
   // ---- 1. Find every gem in every file, and grab a donor template ----
   const gemLocations = {};
@@ -267,16 +269,16 @@ function run() {
     console.log(' ', f, '->', plan[f].length, 'gems:', counts);
   });
 
-  if (DRY_RUN) {
+  if (dryRun) {
     console.log('\nDRY RUN — no files modified.');
-    return;
+    return { finalList, plan };
   }
 
   // ---- 5. Backup ----
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupDir = path.join(PROJECT_ROOT, `saves-backup-${stamp}`);
+  const backupDir = path.join(path.dirname(savesDir), `saves-backup-${stamp}`);
   fs.mkdirSync(backupDir, { recursive: true });
-  files.forEach(f => fs.copyFileSync(path.join(SAVES_DIR, f), path.join(backupDir, f)));
+  files.forEach(f => fs.copyFileSync(path.join(savesDir, f), path.join(backupDir, f)));
   console.log('\nBacked up all', files.length, 'save files to', backupDir);
 
   // ---- 6. Write: remove gems from every file, insert the plan into destinations ----
@@ -303,7 +305,7 @@ function run() {
     const newItemCount = list.itemCount - (gems ? gems.length : 0) + insertions.length;
     newBuf.writeUInt16LE(newItemCount, list.jmPos + 2);
     finalize(newBuf);
-    fs.writeFileSync(path.join(SAVES_DIR, f), newBuf);
+    fs.writeFileSync(path.join(savesDir, f), newBuf);
     console.log(
       `${f}: removed ${gems ? gems.length : 0} gem(s), inserted ${insertions.length} gem(s)`,
       `(item count ${list.itemCount} -> ${newItemCount}, size ${buf.length} -> ${newBuf.length})`
@@ -311,6 +313,24 @@ function run() {
   });
 
   console.log('\nDone.');
+  return { finalList, plan, backupDir };
 }
 
-run();
+module.exports = { run };
+
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes('--dry-run');
+  const pathArg = args.find(a => !a.startsWith('--'));
+  if (!pathArg) {
+    console.error('Usage: node src/merge-gems.js <path-to-saves-folder> [--dry-run]');
+    process.exit(1);
+  }
+  const savesDir = path.resolve(pathArg);
+  try {
+    run(savesDir, { dryRun });
+  } catch (err) {
+    console.error('Error:', err.message);
+    process.exit(1);
+  }
+}
