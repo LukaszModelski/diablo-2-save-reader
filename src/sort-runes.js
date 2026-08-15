@@ -2,8 +2,8 @@
  * Diablo II (.d2s) Save File Reader / Parser
  * Gathers every loose rune across all save files, sorts them from highest
  * level to lowest, and consolidates them into mule characters, in priority
- * order: Mule-runes -> mule-runess. Each mule is filled to capacity
- * (Inventory + Stash + Cube) before overflow moves to the next one.
+ * order: Mule-runes -> mule-runess -> mule-runesss. Each mule is filled to
+ * capacity (Inventory + Stash + Cube) before overflow moves to the next one.
  *
  * Runes socketed into gear are left untouched (they're deliberately placed
  * there for a runeword, not loose inventory) — only stashed/inventoried/
@@ -34,7 +34,7 @@ const {
 // Destination mules, in fill priority order (first is filled to capacity before
 // overflow moves to the next). Matched against saves/ case-sensitively, since
 // that's how these files are actually named on disk.
-const DESTINATIONS = ['Mule-runes.d2s', 'mule-runess.d2s'];
+const DESTINATIONS = ['Mule-runes.d2s', 'mule-runess.d2s', 'mule-runesss.d2s'];
 
 const RUNE_CODE_TO_NAME = {};
 const RUNE_CODE_TO_LEVEL = {};

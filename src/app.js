@@ -67,7 +67,7 @@ async function main() {
   const choice = await ask(
     "What would you like to do?\n" +
       "  1) Generate save report (characters, items, runes, runewords)\n" +
-      "  2) Sort runes (scans all characters and sorts loose runes, highest level first, into 'Mule-runes' then 'mule-runess')\n" +
+      "  2) Sort runes (scans all characters and sorts loose runes, highest level first, into 'Mule-runes', then 'mule-runess', then 'mule-runesss')\n" +
       "  3) Merge gems (scans all characters and places gems in 'mule-gems' characters)\n" +
       "  0) Exit\n" +
       "Enter choice: ",
