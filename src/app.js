@@ -7,79 +7,100 @@
  *   node src/app.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
-const { exec } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline");
+const { exec } = require("child_process");
 
-const { pickFolder } = require('./folderPicker');
-const { main: generateHtmlMain } = require('./generate-html');
-const { run: mergeGemsRun } = require('./merge-gems');
+const { pickFolder } = require("./folderPicker");
+const { main: generateHtmlMain } = require("./generate-html");
+const { run: mergeGemsRun } = require("./merge-gems");
+const { run: sortRunesRun } = require("./sort-runes");
 
-const PROJECT_ROOT = path.join(__dirname, '..');
+const PROJECT_ROOT = path.join(__dirname, "..");
 
 function ask(question) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise(resolve => rl.question(question, answer => { rl.close(); resolve(answer.trim()); }));
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) =>
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    }),
+  );
 }
 
 function openInBrowser(filePath) {
-  const cmd = process.platform === 'darwin' ? `open "${filePath}"`
-    : process.platform === 'win32' ? `start "" "${filePath}"`
-    : `xdg-open "${filePath}"`;
-  exec(cmd, err => {
-    if (err) console.log('Could not auto-open the report:', err.message);
+  const cmd =
+    process.platform === "darwin"
+      ? `open "${filePath}"`
+      : process.platform === "win32"
+        ? `start "" "${filePath}"`
+        : `xdg-open "${filePath}"`;
+  exec(cmd, (err) => {
+    if (err) console.log("Could not auto-open the report:", err.message);
   });
 }
 
 async function main() {
-  console.log('=== Diablo II Save Tool ===\n');
+  console.log("=== Diablo II Save Tool ===\n");
 
-  const folder = pickFolder('Select your Diablo II saves folder');
+  const folder = pickFolder("Select your Diablo II saves folder");
   if (!folder) {
-    console.log('No folder selected — exiting.');
+    console.log("No folder selected — exiting.");
     return;
   }
-  console.log('Using folder:', folder, '\n');
+  console.log("Using folder:", folder, "\n");
 
-  const saveFileCount = fs.readdirSync(folder).filter(f => f.toLowerCase().endsWith('.d2s')).length;
+  const saveFileCount = fs
+    .readdirSync(folder)
+    .filter((f) => f.toLowerCase().endsWith(".d2s")).length;
   if (saveFileCount === 0) {
-    console.log(`No Diablo II save files (.d2s) found in "${folder}". Pick a different folder and try again.`);
+    console.log(
+      `No Diablo II save files (.d2s) found in "${folder}". Pick a different folder and try again.`,
+    );
     return;
   }
 
   const choice = await ask(
-    'What would you like to do?\n' +
-    '  1) Generate save report (characters, items, runes, runewords)\n' +
-    '  2) Merge gems (Horadric Cube upgrade + consolidate into mule characters)\n' +
-    '  3) Both (merge gems, then generate the report)\n' +
-    '  0) Exit\n' +
-    'Enter choice: '
+    "What would you like to do?\n" +
+      "  1) Generate save report (characters, items, runes, runewords)\n" +
+      "  2) Sort runes (scans all characters and sorts loose runes, highest level first, into 'Mule-runes' then 'mule-runess')\n" +
+      "  3) Merge gems (scans all characters and places gems in 'mule-gems' characters)\n" +
+      "  0) Exit\n" +
+      "Enter choice: ",
   );
 
-  if (choice === '2' || choice === '3') {
-    console.log('\n--- Merging gems ---');
+  if (choice === "2") {
+    console.log("\n--- Sorting runes ---");
+    sortRunesRun(folder);
+  }
+
+  if (choice === "3") {
+    console.log("\n--- Merging gems ---");
     mergeGemsRun(folder);
   }
 
-  if (choice === '1' || choice === '3') {
-    console.log('\n--- Generating report ---');
-    const outputFile = path.join(PROJECT_ROOT, 'index.html');
+  if (choice === "1") {
+    console.log("\n--- Generating report ---");
+    const outputFile = path.join(PROJECT_ROOT, "index.html");
     generateHtmlMain(folder, outputFile);
-    console.log('Opening report in browser...');
+    console.log("Opening report in browser...");
     openInBrowser(outputFile);
   }
 
-  if (!['0', '1', '2', '3'].includes(choice)) {
-    console.log('Unrecognized choice — exiting without doing anything.');
+  if (!["0", "1", "2", "3"].includes(choice)) {
+    console.log("Unrecognized choice — exiting without doing anything.");
   }
 }
 
 main()
-  .catch(err => {
-    console.error('\nError:', err.message);
+  .catch((err) => {
+    console.error("\nError:", err.message);
     process.exitCode = 1;
   })
   .finally(async () => {
-    await ask('\nPress Enter to exit...');
+    await ask("\nPress Enter to exit...");
   });

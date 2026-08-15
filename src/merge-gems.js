@@ -18,112 +18,21 @@ const fs = require('fs');
 const path = require('path');
 
 const { ITEM_DATABASE } = require('./constants');
-const { getBits } = require('./bitReader');
+const {
+  CONTAINERS,
+  finalize,
+  findItemList,
+  getItemCode,
+  isSimpleItem,
+  getLocation,
+  buildSimpleItem,
+  backupSavesDir,
+} = require('./d2sBinary');
 
 // Destination mules, in fill priority order (first is filled to capacity before
 // overflow moves to the next). Matched against saves/ case-sensitively, since
 // that's how these files are actually named on disk.
 const DESTINATIONS = ['Mule-stones.d2s', 'mule-stoness.d2s', 'mule-stonesss.d2s'];
-
-// Container layout, discovered empirically from real save data (see below):
-// id 1 = Inventory (10 wide x 4 tall), id 4 = Cube (3x4), id 5 = Stash (6x8).
-const CONTAINERS = [
-  { id: 1, name: 'Inventory', w: 10, h: 4 },
-  { id: 5, name: 'Stash', w: 6, h: 8 },
-  { id: 4, name: 'Cube', w: 3, h: 4 },
-];
-
-// ---- bit helpers ----
-function setBits(buffer, bitOffset, numBits, value) {
-  for (let i = 0; i < numBits; i++) {
-    const byteIdx = Math.floor((bitOffset + i) / 8);
-    const bitIdx = (bitOffset + i) % 8;
-    const bit = (value >> i) & 1;
-    if (bit) buffer[byteIdx] |= (1 << bitIdx);
-    else buffer[byteIdx] &= (~(1 << bitIdx)) & 0xFF;
-  }
-}
-
-function calcChecksum(buf) {
-  let sum = 0;
-  for (let i = 0; i < buf.length; i++) {
-    let ch = buf[i];
-    if (i >= 12 && i < 16) ch = 0;
-    ch += (sum < 0) ? 1 : 0;
-    sum = (sum << 1) + ch;
-  }
-  return sum >>> 0;
-}
-
-function finalize(buf) {
-  buf.writeUInt32LE(buf.length, 8);
-  buf.writeUInt32LE(0, 12);
-  buf.writeUInt32LE(calcChecksum(buf), 12);
-}
-
-function findItemList(buf) {
-  const jmPos = buf.indexOf(Buffer.from([0x4A, 0x4D]), 700);
-  if (jmPos === -1) return null;
-  const itemCount = buf.readUInt16LE(jmPos + 2);
-  let currOffset = jmPos + 4;
-  const ranges = [];
-  for (let i = 0; i < itemCount; i++) {
-    if (buf[currOffset] !== 0x4A || buf[currOffset + 1] !== 0x4D) break;
-    const nextJm = buf.indexOf(Buffer.from([0x4A, 0x4D]), currOffset + 2);
-    const end = nextJm === -1 ? buf.length : nextJm;
-    ranges.push([currOffset, end]);
-    if (nextJm === -1) { currOffset = buf.length; break; }
-    currOffset = nextJm;
-  }
-  return { jmPos, itemCount, ranges, listEnd: currOffset };
-}
-
-function getItemCode(buf, start) {
-  const startBit = (start + 2) * 8;
-  let code = '';
-  for (let c = 0; c < 4; c++) {
-    const cc = getBits(buf, startBit + 60 + (c * 8), 8);
-    if (cc >= 32 && cc <= 126) code += String.fromCharCode(cc);
-  }
-  return code.trim();
-}
-
-function isSimpleItem(buf, start) {
-  return getBits(buf, (start + 2) * 8 + 21, 1) === 1;
-}
-
-function getLocation(buf, start) {
-  const b = (start + 2) * 8;
-  const location = getBits(buf, b + 42, 3);
-  return {
-    location,
-    container: location === 0 ? getBits(buf, b + 57, 3) : null,
-    x: location === 0 ? getBits(buf, b + 49, 4) : null,
-    y: location === 0 ? getBits(buf, b + 53, 3) : null,
-  };
-}
-
-function writeItemCode(buf, start, newCode) {
-  const startBit = (start + 2) * 8;
-  const padded = (newCode + '   ').slice(0, 4);
-  for (let c = 0; c < 4; c++) {
-    setBits(buf, startBit + 60 + (c * 8), 8, padded.charCodeAt(c));
-  }
-}
-
-// Clone a real, valid simple-gem item and only touch the fields that need to
-// change (location/container/position/code); every other bit (identified,
-// ethereal, socketed, etc.) stays exactly as it was on the real donor item.
-function buildGemItem(template, code, containerId, x, y) {
-  const buf = Buffer.from(template);
-  const startBit = 2 * 8;
-  setBits(buf, startBit + 42, 3, 0); // location = stored
-  setBits(buf, startBit + 49, 4, x);
-  setBits(buf, startBit + 53, 3, y);
-  setBits(buf, startBit + 57, 3, containerId);
-  writeItemCode(buf, 0, code);
-  return buf;
-}
 
 // ---- gem tier tables ----
 const GEM_NAME_TO_CODE = {};
@@ -275,10 +184,7 @@ function run(savesDir, { dryRun = false } = {}) {
   }
 
   // ---- 5. Backup ----
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupDir = path.join(path.dirname(savesDir), `saves-backup-${stamp}`);
-  fs.mkdirSync(backupDir, { recursive: true });
-  files.forEach(f => fs.copyFileSync(path.join(savesDir, f), path.join(backupDir, f)));
+  const backupDir = backupSavesDir(savesDir, files);
   console.log('\nBacked up all', files.length, 'save files to', backupDir);
 
   // ---- 6. Write: remove gems from every file, insert the plan into destinations ----
@@ -293,7 +199,7 @@ function run(savesDir, { dryRun = false } = {}) {
     const keptChunks = [];
     list.ranges.forEach(([s, e]) => { if (!removeSet.has(s)) keptChunks.push(buf.subarray(s, e)); });
 
-    const newItems = insertions.map(p => buildGemItem(donorTemplate, p.code, p.containerId, p.x, p.y));
+    const newItems = insertions.map(p => buildSimpleItem(donorTemplate, p.code, p.containerId, p.x, p.y));
     const newItemSection = Buffer.concat([...keptChunks, ...newItems]);
 
     const newBuf = Buffer.concat([
