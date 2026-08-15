@@ -10,7 +10,7 @@
 const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
-const { exec } = require("child_process");
+const { exec, execFile } = require("child_process");
 
 const { pickFolder } = require("./folderPicker");
 const { main: generateHtmlMain } = require("./generate-html");
@@ -51,12 +51,23 @@ function ask(question) {
 }
 
 function openInBrowser(filePath) {
-  const cmd =
-    process.platform === "darwin"
-      ? `open "${filePath}"`
-      : process.platform === "win32"
-        ? `start "" "${filePath}"`
-        : `xdg-open "${filePath}"`;
+  if (process.platform === "win32") {
+    // Avoid `cmd.exe /c start "" "path"` — that combination is notoriously
+    // unreliable with paths containing spaces because cmd.exe re-parses
+    // quoted arguments after /c in surprising ways. PowerShell's Start-Process
+    // (already relied on for the folder picker) doesn't have that pitfall,
+    // and execFile passes it straight to powershell.exe with no shell involved.
+    const escaped = filePath.replace(/'/g, "''");
+    execFile(
+      "powershell",
+      ["-NoProfile", "-NonInteractive", "-Command", `Start-Process -FilePath '${escaped}'`],
+      (err) => {
+        if (err) console.log("Could not auto-open the report:", err.message);
+      },
+    );
+    return;
+  }
+  const cmd = process.platform === "darwin" ? `open "${filePath}"` : `xdg-open "${filePath}"`;
   exec(cmd, (err) => {
     if (err) console.log("Could not auto-open the report:", err.message);
   });
