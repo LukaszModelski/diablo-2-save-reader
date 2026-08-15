@@ -18,6 +18,24 @@ const { run: mergeGemsRun } = require("./merge-gems");
 const { run: sortRunesRun } = require("./sort-runes");
 
 const PROJECT_ROOT = path.join(__dirname, "..");
+const LAST_FOLDER_FILE = path.join(PROJECT_ROOT, ".last-saves-folder");
+
+function readLastFolder() {
+  try {
+    const saved = fs.readFileSync(LAST_FOLDER_FILE, "utf8").trim();
+    return saved && fs.existsSync(saved) ? saved : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function saveLastFolder(folder) {
+  try {
+    fs.writeFileSync(LAST_FOLDER_FILE, folder);
+  } catch (err) {
+    console.log("Could not remember this folder for next time:", err.message);
+  }
+}
 
 function ask(question) {
   const rl = readline.createInterface({
@@ -47,12 +65,14 @@ function openInBrowser(filePath) {
 async function main() {
   console.log("=== Diablo II Save Tool ===\n");
 
-  const folder = pickFolder("Select your Diablo II saves folder");
+  const lastFolder = readLastFolder();
+  const folder = pickFolder("Select your Diablo II saves folder", lastFolder);
   if (!folder) {
     console.log("No folder selected — exiting.");
     return;
   }
   console.log("Using folder:", folder, "\n");
+  saveLastFolder(folder);
 
   const saveFileCount = fs
     .readdirSync(folder)
