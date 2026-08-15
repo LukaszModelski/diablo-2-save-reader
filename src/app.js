@@ -16,6 +16,7 @@ const { pickFolder } = require("./folderPicker");
 const { main: generateHtmlMain } = require("./generate-html");
 const { run: mergeGemsRun } = require("./merge-gems");
 const { run: sortRunesRun } = require("./sort-runes");
+const { run: sortJewelsRun } = require("./sort-jewels");
 
 const PROJECT_ROOT = path.join(__dirname, "..");
 const LAST_FOLDER_FILE = path.join(PROJECT_ROOT, ".last-saves-folder");
@@ -99,7 +100,8 @@ async function main() {
     "What would you like to do?\n" +
       "  1) Generate save report (characters, items, runes, runewords)\n" +
       "  2) Sort runes (scans all characters and sorts loose runes, highest level first, into 'Mule-runes', then 'mule-runess', then 'mule-runesss')\n" +
-      "  3) Merge gems (scans all characters and places gems in 'mule-gems' characters)\n" +
+      "  3) Sort jewels (scans all characters and sorts loose jewels, rarest first, into 'mule-jewels', then 'mule-jewelss')\n" +
+      "  4) Merge gems (scans all characters and places gems in 'mule-gems' characters)\n" +
       "  0) Exit\n" +
       "Enter choice: ",
   );
@@ -110,6 +112,11 @@ async function main() {
   }
 
   if (choice === "3") {
+    console.log("\n--- Sorting jewels ---");
+    sortJewelsRun(folder);
+  }
+
+  if (choice === "4") {
     console.log("\n--- Merging gems ---");
     mergeGemsRun(folder);
   }
@@ -122,7 +129,7 @@ async function main() {
     openInBrowser(outputFile);
   }
 
-  if (!["0", "1", "2", "3"].includes(choice)) {
+  if (!["0", "1", "2", "3", "4"].includes(choice)) {
     console.log("Unrecognized choice — exiting without doing anything.");
   }
 }

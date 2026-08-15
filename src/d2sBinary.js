@@ -90,6 +90,16 @@ function getLocation(buf, start) {
   };
 }
 
+// Quality/rarity (Normal, Magic, Rare, Unique, Crafted, ...) only exists as
+// explicit bits on non-simple items (magic/rare/unique/crafted gear carries
+// affix data); simple items (plain gems, runes, unenchanted jewels, ...) have
+// no such bits and are always plain "Normal" quality.
+function getQuality(buf, start) {
+  if (isSimpleItem(buf, start)) return 2; // Normal
+  const b = (start + 2) * 8;
+  return getBits(buf, b + 134, 4);
+}
+
 function writeItemCode(buf, start, newCode) {
   const startBit = (start + 2) * 8;
   const padded = (newCode + '   ').slice(0, 4);
@@ -112,6 +122,22 @@ function buildSimpleItem(template, code, containerId, x, y) {
   return buf;
 }
 
+// Move a real item's exact bytes to a new stored location, whatever its
+// length or complexity — unlike buildSimpleItem, this doesn't require the
+// item to be a fixed-shape simple item. Only the common item-header bits
+// (shared by every item type, before any quality-specific affix data begins)
+// are touched; everything else — including magic/rare/unique affixes — is
+// preserved byte-for-byte.
+function repositionItem(itemBytes, containerId, x, y) {
+  const buf = Buffer.from(itemBytes);
+  const startBit = 2 * 8;
+  setBits(buf, startBit + 42, 3, 0); // location = stored
+  setBits(buf, startBit + 49, 4, x);
+  setBits(buf, startBit + 53, 3, y);
+  setBits(buf, startBit + 57, 3, containerId);
+  return buf;
+}
+
 function backupSavesDir(savesDir, files) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupDir = path.join(path.dirname(savesDir), `saves-backup-${stamp}`);
@@ -129,7 +155,9 @@ module.exports = {
   getItemCode,
   isSimpleItem,
   getLocation,
+  getQuality,
   writeItemCode,
   buildSimpleItem,
+  repositionItem,
   backupSavesDir,
 };
