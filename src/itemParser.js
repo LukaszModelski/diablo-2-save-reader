@@ -4,6 +4,8 @@
 
 const { EQUIPPED_SLOTS, STORED_LOCATIONS, QUALITIES, ITEM_DATABASE } = require('./constants');
 const { getBits } = require('./bitReader');
+const { getUniqueName } = require('./d2sBinary');
+const { UNIQUE_ITEMS } = require('./uniqueItems');
 
 function parseItems(buf) {
   // Item list header ("JM" + 16-bit item count) is not at a fixed offset — its
@@ -60,6 +62,7 @@ function parseItems(buf) {
 
     if (code) {
       const dbEntry = ITEM_DATABASE[code.toLowerCase()] || { name: `Unknown (${code})`, type: 'Item' };
+      const uniqueName = qualityName === 'Unique' ? getUniqueName(buf, currOffset, code, UNIQUE_ITEMS) : null;
 
       items.push({
         rawCode: code,
@@ -67,6 +70,7 @@ function parseItems(buf) {
         type: dbEntry.type,
         level: dbEntry.level,
         quality: qualityName,
+        uniqueName,
         location: locStr,
         isEquipped,
         slotName
@@ -108,13 +112,20 @@ function parseItems(buf) {
   });
 
   // Grouped by category (item type), then by name within each category.
-  // Items with something socketed into them are unique instances, so they're kept
-  // out of the aggregate count and reported separately in socketedInstances.
+  // Items that are individually notable -- something socketed into them, or a
+  // specifically identified unique name -- are kept out of the aggregate
+  // count and reported separately in notableInstances instead.
   const groupedByCategory = {};
-  const socketedInstances = [];
+  const notableInstances = [];
   topLevelItems.forEach(it => {
-    if (it.socketedItems && it.socketedItems.length) {
-      socketedInstances.push({ category: it.type, name: it.name, level: it.level, socketedItems: it.socketedItems });
+    if ((it.socketedItems && it.socketedItems.length) || it.uniqueName) {
+      notableInstances.push({
+        category: it.type,
+        name: it.name,
+        level: it.level,
+        uniqueName: it.uniqueName,
+        socketedItems: it.socketedItems
+      });
       return;
     }
     if (!groupedByCategory[it.type]) groupedByCategory[it.type] = {};
@@ -131,7 +142,7 @@ function parseItems(buf) {
     storedItems,
     groupedSummary,
     groupedByCategory,
-    socketedInstances
+    notableInstances
   };
 }
 

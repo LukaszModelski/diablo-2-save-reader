@@ -80,9 +80,17 @@ function renderProgress(title, data, unitLabel) {
       </table>`;
 }
 
-function socketedSuffix(socketedItems) {
-  if (!socketedItems || !socketedItems.length) return '';
-  return ` <span class="muted">(${socketedItems.map(s => esc(s.name)).join(', ')})</span>`;
+// Builds the "(Duskdeep, Shael Rune)"-style suffix shown next to an item's
+// base name — the identified unique name (when known) and any socketed
+// contents, each styled distinctly.
+function itemNameSuffix(it) {
+  const parts = [];
+  if (it.uniqueName) parts.push(`<span class="unique-name">${esc(it.uniqueName)}</span>`);
+  if (it.socketedItems && it.socketedItems.length) {
+    parts.push(`<span class="muted">${it.socketedItems.map(s => esc(s.name)).join(', ')}</span>`);
+  }
+  if (!parts.length) return '';
+  return ` <span class="muted">(</span>${parts.join('<span class="muted">, </span>')}<span class="muted">)</span>`;
 }
 
 function renderEquipped(equippedItems) {
@@ -90,7 +98,7 @@ function renderEquipped(equippedItems) {
     ? equippedItems.map(it => `
         <tr>
           <td class="slot">${esc(it.slotName)}</td>
-          <td class="highlight">${esc(it.name)}${socketedSuffix(it.socketedItems)}</td>
+          <td class="highlight">${esc(it.name)}${itemNameSuffix(it)}</td>
           <td class="quality-${esc(it.quality.toLowerCase())}">${esc(it.quality)}</td>
           <td class="muted">${esc(it.type)}</td>
         </tr>`).join('')
@@ -197,9 +205,9 @@ function renderRunewordsTab(runewords, runeCounts) {
       ${blocks}`;
 }
 
-function renderInventory(groupedByCategory, socketedInstances = []) {
+function renderInventory(groupedByCategory, notableInstances = []) {
   const instancesByCategory = {};
-  socketedInstances.forEach(inst => {
+  notableInstances.forEach(inst => {
     if (!instancesByCategory[inst.category]) instancesByCategory[inst.category] = [];
     instancesByCategory[inst.category].push(inst);
   });
@@ -217,16 +225,16 @@ function renderInventory(groupedByCategory, socketedInstances = []) {
           <li>${icon}<span class="item-label"><span class="highlight">${esc(name)}</span>${level != null ? ` <span class="muted">(Lvl ${level})</span>` : ''}</span> <span class="count">x${count}</span></li>`;
     }).join('');
 
-    const socketedItems = (instancesByCategory[category] || [])
+    const notableItems = (instancesByCategory[category] || [])
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(inst => `
-          <li><span class="item-label"><span class="highlight">${esc(inst.name)}</span>${socketedSuffix(inst.socketedItems)}</span></li>`)
+          <li><span class="item-label"><span class="highlight">${esc(inst.name)}</span>${itemNameSuffix(inst)}</span></li>`)
       .join('');
 
     return `
         <div class="category">
           <h3>${esc(category)}</h3>
-          <ul class="item-list">${items}${socketedItems}</ul>
+          <ul class="item-list">${items}${notableItems}</ul>
         </div>`;
   }).join('');
 
@@ -255,7 +263,7 @@ function renderCharacterPanel(fileName, buf) {
       <section class="card">${renderProgress('Difficulty &amp; Quest Progress', quests, 'Quests')}</section>
       <section class="card">${renderProgress('Waypoints Unlocked', waypoints, 'Waypoints')}</section>
       <section class="card full">${renderEquipped(itemData.equippedItems)}</section>
-      <section class="card full">${renderInventory(itemData.groupedByCategory, itemData.socketedInstances)}</section>
+      <section class="card full">${renderInventory(itemData.groupedByCategory, itemData.notableInstances)}</section>
     </div>
     <footer>${esc(fileName)} (${buf.length} bytes) &mdash; Total Item Count: ${itemData.totalItems}</footer>`;
 
@@ -454,6 +462,7 @@ function generateHtml(savesDir) {
   table.runeword-table td { vertical-align: top; }
   .rune-seq img.rune-icon { display: inline-block; vertical-align: middle; margin-right: 2px; }
   .rune-owned { color: #4caf50; font-weight: 600; }
+  .unique-name { color: var(--unique); font-weight: 600; }
 </style>
 </head>
 <body>

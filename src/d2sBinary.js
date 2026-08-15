@@ -100,6 +100,21 @@ function getQuality(buf, start) {
   return getBits(buf, b + 134, 4);
 }
 
+// Resolves a Unique-quality item's specific name (e.g. "Duskdeep") by reading
+// the unique-ID field and cross-checking it against UNIQUE_ITEMS. Empirically
+// verified against real save data — only reliable for Normal/Exceptional tier
+// armor, weapons, and shields; Elite-tier items (armor codes starting with
+// "x", weapon codes starting with "8"/"9") and jewelry (rings/amulets) use a
+// different, not-yet-decoded layout, so the base-code check below makes those
+// safely return null instead of a wrong name.
+function getUniqueName(buf, start, code, uniqueItems) {
+  if (getQuality(buf, start) !== 7) return null; // 7 = Unique
+  const b = (start + 2) * 8;
+  const id = getBits(buf, b + 140, 9);
+  const row = uniqueItems[id];
+  return row && row.code === code ? row.name : null;
+}
+
 function writeItemCode(buf, start, newCode) {
   const startBit = (start + 2) * 8;
   const padded = (newCode + '   ').slice(0, 4);
@@ -156,6 +171,7 @@ module.exports = {
   isSimpleItem,
   getLocation,
   getQuality,
+  getUniqueName,
   writeItemCode,
   buildSimpleItem,
   repositionItem,
