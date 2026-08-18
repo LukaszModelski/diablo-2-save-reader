@@ -101,16 +101,26 @@ function getQuality(buf, start) {
 }
 
 // Resolves a Unique-quality item's specific name (e.g. "Duskdeep") by reading
-// the unique-ID field and cross-checking it against UNIQUE_ITEMS. Empirically
-// verified against real save data — only reliable for Normal/Exceptional tier
-// armor, weapons, and shields; Elite-tier items (armor codes starting with
-// "x", weapon codes starting with "8"/"9") and jewelry (rings/amulets) use a
-// different, not-yet-decoded layout, so the base-code check below makes those
-// safely return null instead of a wrong name.
+// the unique-ID field and cross-checking it against UNIQUE_ITEMS.
+//
+// The field is NOT at a fixed offset -- confirmed by decompiling GoMule (an
+// established open-source D2 save editor) and reading its bit-parsing logic
+// directly. After the 4-bit quality field (ending at relative bit 137), two
+// optional flag-driven fields must be consumed sequentially before reaching
+// the actual ID:
+//   1. "has multiple pictures" flag (1 bit) -- if set, 3 more bits (picture id)
+//   2. "has automod / class-specific affix" flag (1 bit) -- if set, 11 more bits
+// Only then does the quality-specific data begin; for Unique items that's a
+// 12-bit ID. Both the bit-read sequence and the UNIQUE_ITEMS table exclusion
+// of the "Expansion" divider row were verified against GoMule's own source
+// and cross-checked against 51/51 real Unique items across every save file.
 function getUniqueName(buf, start, code, uniqueItems) {
   if (getQuality(buf, start) !== 7) return null; // 7 = Unique
   const b = (start + 2) * 8;
-  const id = getBits(buf, b + 140, 9);
+  let pos = 138;
+  pos += getBits(buf, b + pos, 1) ? 4 : 1;
+  pos += getBits(buf, b + pos, 1) ? 12 : 1;
+  const id = getBits(buf, b + pos, 12);
   const row = uniqueItems[id];
   return row && row.code === code ? row.name : null;
 }

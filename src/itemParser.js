@@ -112,12 +112,14 @@ function parseItems(buf) {
   });
 
   // Grouped by category (item type), then by name within each category.
+  // Only stored items are included -- equipped gear already has its own
+  // "Equipped Gear" table, so it's excluded here to avoid double-listing it.
   // Items that are individually notable -- something socketed into them, or a
   // specifically identified unique name -- are kept out of the aggregate
   // count and reported separately in notableInstances instead.
   const groupedByCategory = {};
   const notableInstances = [];
-  topLevelItems.forEach(it => {
+  storedItems.forEach(it => {
     if ((it.socketedItems && it.socketedItems.length) || it.uniqueName) {
       notableInstances.push({
         category: it.type,

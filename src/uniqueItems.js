@@ -1,15 +1,19 @@
 /**
  * Unique Item Reference (Diablo II LoD)
- * Source: Diablo II UniqueItems.txt game data.
- * Array index corresponds to the in-game "unique ID" stored in a save
- * file for Unique-quality items (see itemParser.js / getUniqueName).
+ * Source: Diablo II UniqueItems.txt game data, cross-checked against the
+ * bundled copy in GoMule (a well-established open-source D2 save/mule editor)
+ * to confirm identical rows.
  *
- * IMPORTANT: this ID -> name mapping has only been verified to work for
- * Normal/Exceptional tier armor, weapons, and shields. Elite-tier items
- * (armor codes starting with "x", weapon codes starting with "8"/"9") and
- * all jewelry (rings/amulets) use a different, not-yet-decoded bit layout
- * -- getUniqueName() only returns a name when the code matches, so those
- * categories safely fall back to no match rather than a wrong name.
+ * Array index corresponds to the in-game "unique ID" bit field stored on a
+ * Unique-quality item -- see getUniqueName() in d2sBinary.js for the exact
+ * (sequential, flag-dependent) bit-read sequence needed to extract it.
+ *
+ * IMPORTANT: the raw UniqueItems.txt file contains one literal divider row
+ * (first column == "Expansion", marking where expansion-only items begin in
+ * the original Blizzard data) that must be dropped before indexing -- real
+ * game clients and GoMule both skip it, so it is excluded here too. Getting
+ * this wrong silently shifts every later row by one and was the root cause
+ * of ~12 items resolving to the wrong name before this was found.
  */
 
 const UNIQUE_ITEMS = [
@@ -142,7 +146,6 @@ const UNIQUE_ITEMS = [
   { name: 'Hell Forge Hammer', code: 'hfh' },
   { name: 'KhalimFlail', code: 'qf1' },
   { name: 'SuperKhalimFlail', code: 'qf2' },
-  { name: 'Expansion', code: '' },
   { name: 'Coldkill', code: '9ha' },
   { name: 'Butcher\'s Pupil', code: '9ax' },
   { name: 'Islestrike', code: '92a' },
