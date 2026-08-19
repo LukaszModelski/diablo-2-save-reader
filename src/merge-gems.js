@@ -114,9 +114,16 @@ function run(savesDir, { dryRun = false } = {}) {
   console.log('Total merge operations:', totalMerges);
   console.log(merged);
 
+  // Best quality first (Perfect -> Chipped) within each family, so the
+  // highest-tier gems are the ones placed first / prioritized into the
+  // first destination mule.
   const finalList = [];
-  Object.entries(merged).forEach(([name, count]) => {
-    for (let i = 0; i < count; i++) finalList.push(GEM_NAME_TO_CODE[name]);
+  FAMILIES.forEach(fam => {
+    for (let tier = 4; tier >= 0; tier--) {
+      const name = tierName(fam, tier);
+      const count = merged[name] || 0;
+      for (let i = 0; i < count; i++) finalList.push(GEM_NAME_TO_CODE[name]);
+    }
   });
   console.log('Total gems after merge:', finalList.length);
 
